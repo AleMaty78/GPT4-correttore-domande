@@ -1,0 +1,60 @@
+import openai
+import spacy
+
+openai.api_key = "your_openai_api_key"
+nlp = spacy.load('it_core_news_sm')
+
+def analisi_sintattica_e_grammaticale(domanda):
+    doc = nlp(domanda)
+    domanda_corretta = ' '.join([token.text for token in doc])
+    return domanda_corretta
+
+def controllo_del_contesto_e_della_pertinenza(domanda):
+    doc = nlp(domanda)
+    entita_principale = None
+    
+    for ent in doc.ents:
+        if ent.label_ in ["ORG", "GPE", "LOC", "PERSON"]:
+            entita_principale = ent.text
+            break
+    
+    if entita_principale:
+        domanda_pertinente = f"riguardo a {entita_principale}, {domanda}"
+    else:
+        domanda_pertinente = domanda
+
+    return domanda_pertinente
+
+def riformulazione_intelligente(domanda):
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt="Riformula la seguente domanda in modo più chiaro e conciso: " + domanda,
+        max_tokens=50,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    return response.choices[0].text.strip()
+
+def ottimizza_domanda(domanda):
+    domanda = analisi_sintattica_e_grammaticale(domanda)
+    domanda = controllo_del_contesto_e_della_pertinenza(domanda)
+    domanda = riformulazione_intelligente(domanda)
+    return domanda
+
+def get_gpt4_response(domanda):
+    domanda_ottimizzata = ottimizza_domanda(domanda)
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt=domanda_ottimizzata,
+        max_tokens=150,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    return response.choices[0].text.strip()
+
+if __name__ == "__main__":
+    domanda = input("Inserisci la tua domanda: ")
+    risposta = get_gpt4_response(domanda)
+    print("Risposta: ", risposta)
